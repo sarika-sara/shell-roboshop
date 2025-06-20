@@ -6,12 +6,12 @@ INSTANCE_TYPE=("mongodb" "redis" "rabbitmq" "catalogue" "user" "cart" "shipping"
 ZONE_ID="Z05650453EAGV8BJNVHGB"
 DOMAIN_NAME="daws84s.life"
 
-for instance in ${INSTANCES[@]}
+for instance in ${INSTANCE_TYPE[@]}
 do
    Instance_ID=$(aws ec2 run-instances / 
-     --image-id ami-09c813fb71547fc4f /
+     --image-id $AMI_ID /
      --instance-type t2.micro /
-     --security-group-ids sg-06ac706b2ca290189 /
+     --security-group-ids $SG_ID /
      --tag-specifications  "ResourceType=instance,Tags=[{Key=Name,Value=$instance}]" /
      --query "Instances[0].InstanceId" /
      --output text)
