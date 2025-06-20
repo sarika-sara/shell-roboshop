@@ -8,11 +8,12 @@ DOMAIN_NAME="daws84s.life"
 
 for instance in ${INSTANCES[@]}
 do
-   Instance_ID=$(aws ec2 run-instances  
+   Instance_ID=$(aws ec2 run-instances / 
      --image-id ami-09c813fb71547fc4f /
      --instance-type t2.micro /
      --security-group-ids sg-06ac706b2ca290189 /
-     --tag-specifications  "ResourceType=instance,Tags=[{Key=Name,Value=$instance}]"--query "Instances[0].InstanceId" /
+     --tag-specifications  "ResourceType=instance,Tags=[{Key=Name,Value=$instance}]" /
+     --query "Instances[0].InstanceId" /
      --output text)
   if[ $instance != "frontend" ]
     then
