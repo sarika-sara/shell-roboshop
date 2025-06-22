@@ -6,7 +6,7 @@ INSTANCE_TYPE=("mongodb" "redis" "rabbitmq" "catalogue" "user" "cart" "shipping"
 ZONE_ID="Z05650453EAGV8BJNVHGB"
 DOMAIN_NAME="daws84s.life"
 
-for instance in ${INSTANCE_TYPE[@]}
+for instance in "${INSTANCE_TYPE[@]}"
 do
    Instance_ID=$(aws ec2 run-instances --image-id $AMI_ID  --instance-type t3.micro  --security-group-ids $SG_ID     --tag-specifications  "ResourceType=instance,Tags=[{Key=Name,Value=$instance}]"  --query "Instances[0].InstanceId"     --output text)
   if [ $instance != "frontend" ]
@@ -17,14 +17,14 @@ do
     fi
             echo "$instance IP address: $IP"
             aws route53 change-resource-record-sets \
-  --hosted-zone-id $zoneid $Zone_ID\
+  --hosted-zone-id $Zone_ID\
   --change-batch '
   {
     "Comment": "Creating  or updating a record set for cognito endpoint"
     ,"Changes": [{
       "Action"              : "CREATE"
       ,"ResourceRecordSet"  : {
-        "Name"              : "'$instance'.'$DOMAIN_NAME'",
+        "Name"              : "'$instance.$DOMAIN_NAME'",
         ,"Type"             : "A"
         ,"TTL"              : 1
         ,"ResourceRecords"  : [{
