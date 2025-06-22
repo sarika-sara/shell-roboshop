@@ -23,15 +23,15 @@ do
     "Comment": "Creating  or updating a record set for cognito endpoint"
     ,"Changes": [{
       "Action"              : "CREATE"
-      ,"ResourceRecordSet"  : [{
-        "Name"              : "'$instance'.'$DOMAIN_NAME'"
+      ,"ResourceRecordSet"  : {
+        "Name"              : "'$instance'.'$DOMAIN_NAME'",
         ,"Type"             : "A"
-        ,"TTL"              : 1
+        ,"TTL"              : 60,
         ,"ResourceRecords"  : [{
             "Value"         : "'$IP'"
         }]
       }
-      }
-    ]
+      }]
+   , 
   }
 done
