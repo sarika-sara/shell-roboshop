@@ -26,12 +26,11 @@ do
       ,"ResourceRecordSet"  : {
         "Name"              : "'$instance'.'$DOMAIN_NAME'",
         ,"Type"             : "A"
-        ,"TTL"              : 60,
+        ,"TTL"              : 1
         ,"ResourceRecords"  : [{
             "Value"         : "'$IP'"
         }]
       }
       }]
-   , 
-  }
-done
+  }'
+   done
