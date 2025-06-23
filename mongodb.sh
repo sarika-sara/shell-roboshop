@@ -35,10 +35,10 @@ else
 fi 
 }
 
-cp mongodb.repo /etc/yum.repos.d/mongo.repo
+cp mongodb.repo /etc/yum.repos.d/mongodb.repo
 VALID $? "copying Mongodb repo"
 
-dnf install mongodb-org -y &>>$LOG_FILE
+dnf install mongodb-org -y &>>$LOG_FILE=/tmp/mongodb.log
 VALID $? "Installing mongodb server"
 
 systemctl enable mongod &>>$LOG_FILE
