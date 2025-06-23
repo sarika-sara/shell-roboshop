@@ -1,8 +1,7 @@
 #!/bin/bash
 AMI_ID="ami-09c813fb71547fc4f"
 SG_ID="sg-06ac706b2ca290189"
-INSTANCE_TYPE=("mongodb" "redis" "rabbitmq" "catalogue" "user" "cart" "shipping" "payment" "dispatch" "frontend")
-ZONE_ID="Z05650453EAGV8BJNVHGB"
+INSTANCE_TYPE=("mongodb" "redis" "rabbitmq" "catalogue" "user" "cart" "shipping" "payment" "dispatch" "frontend" "mysql")
 DOMAIN_NAME="daws84s.life"
 
 for instance in "${INSTANCE_TYPE[@]}"
