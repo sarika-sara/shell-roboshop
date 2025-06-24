@@ -62,6 +62,7 @@ curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue
 VALIDATE $? "Downloading Catalogue"
 else
 echo -e "$G Code already downloaded$N"
+fi 
 
 cd /app
 unzip /tmp/catalogue.zip &>>$LOG_FILE
