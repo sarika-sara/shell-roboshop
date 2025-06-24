@@ -16,16 +16,15 @@ SCRIPT_DIR=$PWD
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
-# check the user has root privileges or not
-if [ $USERID -ne 0 ]; then
+if [ "$USERID" -ne 0 ]; then
   echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
-  exit 1
+  exit 1 # give other than 0 upto 127
 else
   echo "You are running with root access" | tee -a $LOG_FILE
 fi
 
 # validate function takes input as exit status, what command they tried to install
-VALIDATE() {
+VALIDATE(){
   if [ $1 -eq 0 ]; then
     echo -e "$2 is ... $G SUCCESS $N" | tee -a $LOG_FILE
   else
@@ -41,34 +40,35 @@ dnf module enable nodejs:20 -y &>>$LOG_FILE
 VALIDATE $? "Enabling nodejs:20"
 
 dnf install nodejs -y &>>$LOG_FILE
-VALIDATE $?"Installing nodejs:20"
+VALIDATE $? "Installing nodejs:20"
 
 useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
 VALIDATE $? "Creating roboshop system user"
 
-mkdir /app 
+mkdir /app
 VALIDATE $? "Creating app directory"
 
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>>$LOG_FILE
 VALIDATE $? "Downloading Catalogue"
 
-cd /app 
+cd /app
 unzip /tmp/catalogue.zip &>>$LOG_FILE
-VALIDATE $? "unzipping catalogue"
+VALIDATE $? "Unzipping catalogue"
 
 npm install &>>$LOG_FILE
 VALIDATE $? "Installing Dependencies"
 
-cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service
-VALIDATE $? "Copying ctalogue service"
+cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service &>>$LOG_FILE
+VALIDATE $? "Copying catalogue service"
 
 systemctl daemon-reload &>>$LOG_FILE
-systemctl enable catalogue  &>>$LOG_FILE
-systemctl start catalogue
+systemctl enable catalogue &>>$LOG_FILE
+systemctl start catalogue &>>$LOG_FILE
 VALIDATE $? "Starting Catalogue"
 
-cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo
-dnf install mongodb-mongosh -y &>>$LOG_FILE
+cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo &>>$LOG_FILE
+dnf install mongodb-org-shell -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-mongosh --host mongodb.daws84s.site </app/db/master-data.js &>>$LOG_FILE
+mongo --host mongodb.daws84s.site </app/schema/catalogue.js &>>$LOG_FILE
+VALIDATE $? "Loading MongoDB schema"
