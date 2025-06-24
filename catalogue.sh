@@ -16,9 +16,10 @@ SCRIPT_DIR=$PWD
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
+# check the user has root privileges or not
 if [ "$USERID" -ne 0 ]; then
   echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
-  exit 1 # give other than 0 upto 127
+  exit 1
 else
   echo "You are running with root access" | tee -a $LOG_FILE
 fi
@@ -42,10 +43,13 @@ VALIDATE $? "Enabling nodejs:20"
 dnf install nodejs -y &>>$LOG_FILE
 VALIDATE $? "Installing nodejs:20"
 
-useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+id roboshop &>>$LOG_FILE
+if [ $? -ne 0 ]; then
+  useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+fi
 VALIDATE $? "Creating roboshop system user"
 
-mkdir /app
+mkdir -p /app
 VALIDATE $? "Creating app directory"
 
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>>$LOG_FILE
