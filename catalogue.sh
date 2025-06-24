@@ -44,16 +44,24 @@ dnf install nodejs -y &>>$LOG_FILE
 VALIDATE $? "Installing nodejs:20"
 
 id roboshop &>>$LOG_FILE
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ]
+ then
   useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+  VALIDATE $? "Creating roboshop system user"
+  else
+  echo -e ("$G User already exists $N")
 fi
-VALIDATE $? "Creating roboshop system user"
+
 
 mkdir -p /app
 VALIDATE $? "Creating app directory"
 
+if [ $? -ne 0 ]
+then
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>>$LOG_FILE
 VALIDATE $? "Downloading Catalogue"
+else
+echo -e ("$G Code already downloaded$N")
 
 cd /app
 unzip /tmp/catalogue.zip &>>$LOG_FILE
