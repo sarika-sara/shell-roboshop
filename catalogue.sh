@@ -67,7 +67,7 @@ systemctl start catalogue &>>$LOG_FILE
 VALIDATE $? "Starting Catalogue"
 
 cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo &>>$LOG_FILE
-dnf install mongodb-org-shell -y &>>$LOG_FILE
+dnf install -y mongodb-org-shell &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
 mongo --host mongodb.daws84s.site </app/schema/catalogue.js &>>$LOG_FILE
