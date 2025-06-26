@@ -85,36 +85,3 @@ VALIDATE $? "Installing MongoDB Client"
 # Load MongoDB schema for catalogue
 mongo --host mongodb.daws84s.life < /app/schema/catalogue.js &>>$LOG_FILE
 VALIDATE $? "Loading MongoDB schema"
-# ADD the schema file directly here
-cat > /app/catalogue.js <<EOF
-db = db.getSiblingDB("catalogue");
-
-db.createCollection("products");
-
-db.products.insertMany([
-  {
-    "id": 1,
-    "name": "APPLE iPhone 12",
-    "price": 799,
-    "category": "mobile",
-    "image": "iphone12.jpg"
-  },
-  {
-    "id": 2,
-    "name": "Samsung Galaxy S21",
-    "price": 699,
-    "category": "mobile",
-    "image": "galaxys21.jpg"
-  },
-  {
-    "id": 3,
-    "name": "Sony Headphones",
-    "price": 199,
-    "category": "accessories",
-    "image": "sonyheadphones.jpg"
-  }
-]);
-EOF
-
-mongo --host mongodb.daws84s.life < /app/catalogue.js &>>$LOG_FILE
-VALIDATE $? "Loading MongoDB schema"
