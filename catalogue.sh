@@ -79,8 +79,9 @@ VALIDATE $? "Starting Catalogue"
 cp $SCRIPT_DIR/mongodb.repo  /etc/yum.repos.d/mongo.repo &>>$LOG_FILE
 VALIDATE $? "Copying repos"
 
-dnf install mongodb-mongosh -y &>>$LOG_FILE
+dnf install mongodb-org-shell -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-mongosh --host mongodb.daws84s.life < /app/db/master-data.js &>>$LOG_FILE
+# Load MongoDB schema for catalogue
+mongo --host mongodb.daws84s.life < /app/schema/catalogue.js &>>$LOG_FILE
 VALIDATE $? "Loading MongoDB schema"
