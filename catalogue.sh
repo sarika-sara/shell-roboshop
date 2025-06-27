@@ -82,16 +82,16 @@ VALIDATE $? "Copying MongoDB repo"
 dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-# Fix MongoDB hostname (replace with actual MongoDB private IP)
+# ✅ Replace with your MongoDB Private IP
+MONGO_PRIVATE_IP="172.31.29.0"         # <--- CHANGE THIS
 MONGO_HOST="mongodb.daws84s.life"
-MONGO_PRIVATE_IP="172.31.28.45"   # <<< ✅ Replace this with actual MongoDB private IP
+SCHEMA_FILE="/app/db/master-data.js"
 
+# Map hostname to IP
 echo "$MONGO_PRIVATE_IP  $MONGO_HOST" >> /etc/hosts
 VALIDATE $? "Mapping MongoDB hostname to IP"
 
 # Load MongoDB Schema
-SCHEMA_FILE="/app/db/master-data.js"
-
 if [ ! -f $SCHEMA_FILE ]; then
   echo -e "$R ERROR: Schema file $SCHEMA_FILE not found $N" | tee -a $LOG_FILE
   exit 1
@@ -106,4 +106,3 @@ fi
 
 mongosh "mongodb://${MONGO_HOST}:27017/catalogue" < $SCHEMA_FILE &>>$LOG_FILE
 VALIDATE $? "Loading MongoDB Schema"
-
