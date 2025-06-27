@@ -70,5 +70,5 @@ VALIDATE $? "removing previous configrations"
 cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf
 VALIDATE $? "Copying successful"
 
-systemctl restart nginx &>>$LOG_FILE
+systemctl restart nginx 
 VALIDATE $? "Starting Nginx"
