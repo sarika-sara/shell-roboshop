@@ -64,9 +64,11 @@ VALIDATE $? "Changing directory to nginx html"
 unzip /tmp/frontend.zip &>>$LOG_FILE
 VALIDATE $? "Unzipping frontend"
 
+rm -rf /etc/nginx/nginx.conf
+VALIDATE $? "removing previous configrations"
+
 cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf
 VALIDATE $? "Copying successful"
-
 
 systemctl restart nginx &>>$LOG_FILE
 VALIDATE $? "Starting Nginx"
