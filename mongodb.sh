@@ -47,7 +47,7 @@ VALID $? "Enabling MongoDB"
 systemctl start mongod &>>$LOG_FILE
 VALID $? "Starting MongoDB"
 
-sed -i -e 's/127.0.0.1/0.0.0.0/' /etc/mongod.conf
+sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mongod.conf
 VALID $? "Editing MongoDB conf file for remote connections"
 
 systemctl restart mongod &>>$LOG_FILE
