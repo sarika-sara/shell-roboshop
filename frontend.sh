@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 USERID=$(id -u)
 
 R="\e[31m"
@@ -16,7 +17,7 @@ SCRIPT_DIR=$PWD
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
-# check the user has root privileges or not
+# Check if the user is root
 if [ "$USERID" -ne 0 ]; then
   echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
   exit 1
@@ -24,7 +25,7 @@ else
   echo "You are running with root access" | tee -a $LOG_FILE
 fi
 
-# validate function takes input as exit status, what command they tried to install
+# Validate function
 VALIDATE(){
   if [ $1 -eq 0 ]; then
     echo -e "$2 is ... $G SUCCESS $N" | tee -a $LOG_FILE
@@ -34,19 +35,29 @@ VALIDATE(){
   fi
 }
 
+# Install unzip if not present
+dnf install unzip -y &>>$LOG_FILE
+VALIDATE $? "Installing unzip"
+
 # Install Nginx
 dnf module disable nginx -y &>>$LOG_FILE
 VALIDATE $? "Disabling Default Nginx"
 
 dnf module enable nginx:1.24 -y &>>$LOG_FILE
-VALIDATE $? "Enabling Nginx"
+VALIDATE $? "Enabling Nginx Repo"
 
 dnf install nginx -y &>>$LOG_FILE
-VALIDATE $? "Install Nginx"
+VALIDATE $? "Installing Nginx"
 
-# Start & Enable Nginx
+# Check nginx config before starting
+nginx -t &>>$LOG_FILE
+VALIDATE $? "Nginx Configuration Check"
+
+# Enable and Start Nginx
 systemctl enable nginx &>>$LOG_FILE
-systemctl start nginx
+VALIDATE $? "Enable Nginx"
+
+systemctl start nginx &>>$LOG_FILE
 VALIDATE $? "Start Nginx"
 
 # Remove default content
@@ -59,15 +70,21 @@ VALIDATE $? "Downloading frontend"
 
 # Extract frontend content
 cd /usr/share/nginx/html
-unzip /tmp/frontend.zip 
-VALIDATE $? "unzipping frontend" &>>$LOG_FILE
+VALIDATE $? "Changing to HTML folder"
 
-# Update nginx.conf
+unzip /tmp/frontend.zip &>>$LOG_FILE
+VALIDATE $? "Unzipping frontend"
+
+# Replace nginx.conf
 rm -rf /etc/nginx/nginx.conf &>>$LOG_FILE
-VALIDATE $? "Remove default nginx conf"
+VALIDATE $? "Removing default nginx.conf"
 
-cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf
-VALIDATE $? "Copying nginx.conf"
+cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf &>>$LOG_FILE
+VALIDATE $? "Copying new nginx.conf"
 
-systemctl restart nginx 
+# Final config check and restart
+nginx -t &>>$LOG_FILE
+VALIDATE $? "Final Nginx Config Test"
+
+systemctl restart nginx &>>$LOG_FILE
 VALIDATE $? "Restarting nginx"
