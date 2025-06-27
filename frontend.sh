@@ -34,9 +34,6 @@ VALIDATE(){
   fi
 }
 
-# Install unzip (needed for frontend)
-dnf install unzip -y &>>$LOG_FILE
-VALIDATE $? "Installing unzip"
 
 # Install Nginx
 dnf module disable nginx -y &>>$LOG_FILE
@@ -47,6 +44,12 @@ VALIDATE $? "Enabling Nginx 1.24"
 
 dnf install nginx -y &>>$LOG_FILE
 VALIDATE $? "Installing Nginx"
+
+systemctl enable nginx &>>$LOG_FILE
+VALIDATE $? "Enabling nginx"
+
+systemctl start nginx &>>$LOG_FILE
+VALIDATE $? "starting nginx"
 
 # Download and unzip frontend
 rm -rf /usr/share/nginx/html/* &>>$LOG_FILE
@@ -61,47 +64,9 @@ VALIDATE $? "Changing directory to nginx html"
 unzip /tmp/frontend.zip &>>$LOG_FILE
 VALIDATE $? "Unzipping frontend"
 
-# Fix Nginx config
-cat <<EOF > /etc/nginx/nginx.conf
-user nginx;
-worker_processes auto;
-error_log /var/log/nginx/error.log;
-pid /run/nginx.pid;
+cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf
+VALIDATE $? "Copying successful"
 
-events {
-    worker_connections 1024;
-}
-
-http {
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
-    log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request" '
-                    '\$status \$body_bytes_sent "\$http_referer" '
-                    '"\$http_user_agent" "\$http_x_forwarded_for"';
-
-    access_log /var/log/nginx/access.log main;
-    sendfile on;
-    keepalive_timeout 65;
-
-    server {
-        listen 80;
-        server_name roboshop.internal;
-
-        location / {
-            root /usr/share/nginx/html;
-            index index.html index.htm;
-        }
-    }
-}
-EOF
-VALIDATE $? "Writing valid nginx.conf"
-
-# Test and restart nginx
-nginx -t &>>$LOG_FILE
-VALIDATE $? "Testing nginx.conf"
-
-systemctl enable nginx &>>$LOG_FILE
-VALIDATE $? "Enabling Nginx"
 
 systemctl restart nginx &>>$LOG_FILE
 VALIDATE $? "Starting Nginx"
