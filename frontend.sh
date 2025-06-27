@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#!/bin/bash
 
 USERID=$(id -u)
 
@@ -17,7 +18,7 @@ SCRIPT_DIR=$PWD
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
-# Check if the user is root
+# Check if root
 if [ "$USERID" -ne 0 ]; then
   echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
   exit 1
@@ -25,7 +26,7 @@ else
   echo "You are running with root access" | tee -a $LOG_FILE
 fi
 
-# Validate function
+# Validator
 VALIDATE(){
   if [ $1 -eq 0 ]; then
     echo -e "$2 is ... $G SUCCESS $N" | tee -a $LOG_FILE
@@ -35,7 +36,7 @@ VALIDATE(){
   fi
 }
 
-# Install unzip if not present
+# Install unzip (needed for frontend)
 dnf install unzip -y &>>$LOG_FILE
 VALIDATE $? "Installing unzip"
 
@@ -44,47 +45,65 @@ dnf module disable nginx -y &>>$LOG_FILE
 VALIDATE $? "Disabling Default Nginx"
 
 dnf module enable nginx:1.24 -y &>>$LOG_FILE
-VALIDATE $? "Enabling Nginx Repo"
+VALIDATE $? "Enabling Nginx 1.24"
 
 dnf install nginx -y &>>$LOG_FILE
 VALIDATE $? "Installing Nginx"
 
-# Check nginx config before starting
-nginx -t &>>$LOG_FILE
-VALIDATE $? "Nginx Configuration Check"
-
-# Enable and Start Nginx
-systemctl enable nginx &>>$LOG_FILE
-VALIDATE $? "Enable Nginx"
-
-systemctl start nginx &>>$LOG_FILE
-VALIDATE $? "Start Nginx"
-
-# Remove default content
+# Download and unzip frontend
 rm -rf /usr/share/nginx/html/* &>>$LOG_FILE
 VALIDATE $? "Removing default content"
 
-# Download frontend content
 curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend.zip &>>$LOG_FILE
 VALIDATE $? "Downloading frontend"
 
-# Extract frontend content
 cd /usr/share/nginx/html
-VALIDATE $? "Changing to HTML folder"
+VALIDATE $? "Changing directory to nginx html"
 
 unzip /tmp/frontend.zip &>>$LOG_FILE
 VALIDATE $? "Unzipping frontend"
 
-# Replace nginx.conf
-rm -rf /etc/nginx/nginx.conf &>>$LOG_FILE
-VALIDATE $? "Removing default nginx.conf"
+# Fix Nginx config
+cat <<EOF > /etc/nginx/nginx.conf
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log;
+pid /run/nginx.pid;
 
-cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf &>>$LOG_FILE
-VALIDATE $? "Copying new nginx.conf"
+events {
+    worker_connections 1024;
+}
 
-# Final config check and restart
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request" '
+                    '\$status \$body_bytes_sent "\$http_referer" '
+                    '"\$http_user_agent" "\$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+    sendfile on;
+    keepalive_timeout 65;
+
+    server {
+        listen 80;
+        server_name roboshop.internal;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+        }
+    }
+}
+EOF
+VALIDATE $? "Writing valid nginx.conf"
+
+# Test and restart nginx
 nginx -t &>>$LOG_FILE
-VALIDATE $? "Final Nginx Config Test"
+VALIDATE $? "Testing nginx.conf"
+
+systemctl enable nginx &>>$LOG_FILE
+VALIDATE $? "Enabling Nginx"
 
 systemctl restart nginx &>>$LOG_FILE
-VALIDATE $? "Restarting nginx"
+VALIDATE $? "Starting Nginx"
