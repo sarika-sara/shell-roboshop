@@ -32,7 +32,7 @@ VALIDATE(){
   fi
 }
 
-# NodeJS setup
+# Install NodeJS
 dnf module disable nodejs -y &>>$LOG_FILE
 VALIDATE $? "Disabling default nodejs"
 
@@ -40,23 +40,22 @@ dnf module enable nodejs:20 -y &>>$LOG_FILE
 VALIDATE $? "Enabling nodejs:20"
 
 dnf install nodejs -y &>>$LOG_FILE
-VALIDATE $? "Installing nodejs:20"
+VALIDATE $? "Installing nodejs"
 
 # Create roboshop user
 id roboshop &>>$LOG_FILE
 if [ $? -ne 0 ]; then
   useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
-  VALIDATE $? "Creating roboshop system user"
+  VALIDATE $? "Creating roboshop user"
 else
   echo -e "$G User already exists $N" | tee -a $LOG_FILE
 fi
 
-# App directory
+# Setup app directory
 mkdir -p /app
 VALIDATE $? "Creating app directory"
 rm -rf /app/*
 
-# Download & unzip catalogue
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>>$LOG_FILE
 VALIDATE $? "Downloading Catalogue"
 
@@ -64,30 +63,41 @@ cd /app
 unzip /tmp/catalogue.zip &>>$LOG_FILE
 VALIDATE $? "Unzipping catalogue"
 
-# Install node dependencies
 npm install &>>$LOG_FILE
-VALIDATE $? "Installing Dependencies"
+VALIDATE $? "Installing node dependencies"
 
-# Setup catalogue service
+# Setup systemd service
 cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service &>>$LOG_FILE
-VALIDATE $? "Copying catalogue service"
+VALIDATE $? "Copying service file"
 
 systemctl daemon-reload &>>$LOG_FILE
 systemctl enable catalogue &>>$LOG_FILE
-systemctl start catalogue &>>$LOG_FILE
-VALIDATE $? "Starting Catalogue"
+systemctl restart catalogue &>>$LOG_FILE
+VALIDATE $? "Starting catalogue service"
 
-# MongoDB Client & Schema setup
+# Setup MongoDB repo
 cp $SCRIPT_DIR/mongodb.repo /etc/yum.repos.d/mongo.repo &>>$LOG_FILE
-VALIDATE $? "Copying repos"
+VALIDATE $? "Copying MongoDB repo"
 
 dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-if [ -f /app/db/master-data.js ]; then
-  mongosh "mongodb://mongodb.daws84s.life:27017/catalogue" < /app/db/master-data.js &>>$LOG_FILE
-  VALIDATE $? "Loading MongoDB schema"
-else
-  echo -e "$R ERROR:: /app/db/master-data.js file not found. Check ZIP content. $N" | tee -a $LOG_FILE
+# Load MongoDB Schema
+MONGO_HOST="mongodb.daws84s.life"
+SCHEMA_FILE="/app/db/master-data.js"
+
+if [ ! -f $SCHEMA_FILE ]; then
+  echo -e "$R ERROR: Schema file $SCHEMA_FILE not found $N" | tee -a $LOG_FILE
   exit 1
 fi
+
+echo "Testing MongoDB connection..." | tee -a $LOG_FILE
+mongosh "mongodb://${MONGO_HOST}:27017/catalogue" --eval "db.stats()" &>>$LOG_FILE
+if [ $? -ne 0 ]; then
+  echo -e "$R ERROR: Cannot connect to MongoDB at ${MONGO_HOST} $N" | tee -a $LOG_FILE
+  exit 1
+fi
+
+mongosh "mongodb://${MONGO_HOST}:27017/catalogue" < $SCHEMA_FILE &>>$LOG_FILE
+VALIDATE $? "Loading MongoDB Schema"
+
