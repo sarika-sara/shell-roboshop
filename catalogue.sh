@@ -16,6 +16,7 @@ SCRIPT_DIR=$PWD
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
+# check the user has root privileges or not
 if [ "$USERID" -ne 0 ]; then
   echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
   exit 1
@@ -23,6 +24,7 @@ else
   echo "You are running with root access" | tee -a $LOG_FILE
 fi
 
+# validate function takes input as exit status, what command they tried to install
 VALIDATE(){
   if [ $1 -eq 0 ]; then
     echo -e "$2 is ... $G SUCCESS $N" | tee -a $LOG_FILE
@@ -42,17 +44,20 @@ dnf install nodejs -y &>>$LOG_FILE
 VALIDATE $? "Installing nodejs:20"
 
 id roboshop &>>$LOG_FILE
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ]
+ then
   useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
   VALIDATE $? "Creating roboshop system user"
-else
-  echo -e "$G User already exists $N" | tee -a $LOG_FILE
+  else
+  echo -e "$G User already exists $N"
 fi
+
 
 mkdir -p /app
 VALIDATE $? "Creating app directory"
 
 rm -rf /app/*
+
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>>$LOG_FILE
 VALIDATE $? "Downloading Catalogue"
 
@@ -71,17 +76,11 @@ systemctl enable catalogue &>>$LOG_FILE
 systemctl start catalogue &>>$LOG_FILE
 VALIDATE $? "Starting Catalogue"
 
-cp $SCRIPT_DIR/mongodb.repo /etc/yum.repos.d/mongo.repo &>>$LOG_FILE
-VALIDATE $? "Copying MongoDB repo"
+cp $SCRIPT_DIR/mongodb.repo  /etc/yum.repos.d/mongo.repo &>>$LOG_FILE
+VALIDATE $? "Copying repos"
 
 dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-# 🧠 FIX: Map MongoDB hostname to private IP
-MONGO_PRIVATE_IP="172.31.29.0"  # <--- Replace this with your MongoDB instance's PRIVATE IP
-echo "$MONGO_PRIVATE_IP mongodb.daws84s.life" >> /etc/hosts
-VALIDATE $? "Mapping MongoDB Hostname"
-
-# Load schema
 mongosh --host mongodb.daws84s.life < /app/db/master-data.js &>>$LOG_FILE
 VALIDATE $? "Loading MongoDB schema"
