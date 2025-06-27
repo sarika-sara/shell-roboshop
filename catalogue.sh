@@ -82,8 +82,14 @@ VALIDATE $? "Copying MongoDB repo"
 dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-# Load MongoDB Schema
+# Fix MongoDB hostname (replace with actual MongoDB private IP)
 MONGO_HOST="mongodb.daws84s.life"
+MONGO_PRIVATE_IP="172.31.28.45"   # <<< ✅ Replace this with actual MongoDB private IP
+
+echo "$MONGO_PRIVATE_IP  $MONGO_HOST" >> /etc/hosts
+VALIDATE $? "Mapping MongoDB hostname to IP"
+
+# Load MongoDB Schema
 SCHEMA_FILE="/app/db/master-data.js"
 
 if [ ! -f $SCHEMA_FILE ]; then
