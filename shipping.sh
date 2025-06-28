@@ -37,7 +37,7 @@ VALIDATE(){
 }
 
 dnf install maven -y &>>$LOG_FILE
-VALIDATE $? "Installing Maven and Java"
+VALIDATE $? "Installing Maven"
 
 id roboshop &>>$LOG_FILE
 if [ $? -ne 0 ]
@@ -66,6 +66,7 @@ mv target/shipping-1.0.jar shipping.jar  &>>$LOG_FILE
 VALIDATE $? "Moving and renaming Jar file"
 
 cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
+VALIDATE $? "copying "
 
 systemctl daemon-reload &>>$LOG_FILE
 VALIDATE $? "Daemon Realod"
@@ -79,7 +80,7 @@ VALIDATE $? "Starting Shipping"
 dnf install mysql -y  &>>$LOG_FILE
 VALIDATE $? "Install MySQL"
 
-mysql -h mysql.daws84s.life -u root -pRoboShop@1 -e "use cities" &>>$LOG_FILE
+mysql -h mysql.daws84s.life -u root -pRoboShop@1  "use cities" &>>$LOG_FILE
 if [ $? -ne 0 ]
 then
     mysql -h mysql.daws84s.life -uroot -pRoboShop@1 < /app/db/schema.sql &>>$LOG_FILE
